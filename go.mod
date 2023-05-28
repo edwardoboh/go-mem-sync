@@ -1,3 +1,3 @@
-module github.com/go-mem-sync
+module github.com/edwardoboh/go-mem-sync
 
 go 1.20
