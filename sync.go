@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"sync"
+	"sync/atomic"
 	"time"
 )
 
 // This hold the state of the player
 type Player struct {
-	mu     sync.RWMutex
-	health int
+	// mu sync.RWMutex
+	// health int
+	health int32
 }
 
 // Note that we do not have to create an initialization for the mutex value
@@ -23,18 +24,20 @@ func NewPlayer() *Player {
 
 func (p *Player) getHealth() int {
 	// (Read) Lock the struct to ensure no routine has access to change it's value
-	p.mu.RLock()
-	defer p.mu.RUnlock()
+	// p.mu.RLock()
+	// defer p.mu.RUnlock()
 
-	return p.health
+	// return p.health
+	return int(atomic.LoadInt32(&p.health))
 }
 
 func (p *Player) takeDamage(value int) {
 	// (Write) Lock the struct before modifying it's value to ensure no routine is currently reading
-	p.mu.Lock()
-	defer p.mu.Unlock()
+	// p.mu.Lock()
+	// defer p.mu.Unlock()
 
-	p.health -= value
+	// p.health -= value
+	atomic.StoreInt32(&p.health, p.health-int32(value))
 }
 
 func StartGameUI(player *Player) {
