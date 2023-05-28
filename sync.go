@@ -21,17 +21,28 @@ func NewPlayer() *Player {
 	}
 }
 
+func (p *Player) getHealth() int {
+	// (Read) Lock the struct to ensure no routine has access to change it's value
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	return p.health
+}
+
+func (p *Player) takeDamage(value int) {
+	// (Write) Lock the struct before modifying it's value to ensure no routine is currently reading
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	p.health -= value
+}
+
 func StartGameUI(player *Player) {
 	ticker := time.NewTicker(time.Second)
 	for {
 		os.Stdout.Sync()
 
-		// (Read) Lock the struct to ensure no routine has access to change it's value
-		player.mu.RLock()
-
-		fmt.Printf("Player health: %v\t\r", player.health)
-
-		player.mu.RUnlock()
+		fmt.Printf("Player health: %v\t\r", player.getHealth())
 
 		<-ticker.C
 	}
@@ -41,16 +52,12 @@ func StartGameLoop(player *Player) {
 	for {
 		timer := time.NewTimer(time.Millisecond * 600)
 
-		// (Write) Lock the struct before modifying it's value to ensure no routine is currently reading
-		player.mu.Lock()
-
-		player.health -= rand.Intn(20)
-		if player.health <= 0 {
+		player.takeDamage(rand.Intn(20))
+		if player.getHealth() <= 0 {
 			fmt.Println("Game Over")
 			return
 		}
 
-		player.mu.Unlock()
 		<-timer.C
 	}
 }
